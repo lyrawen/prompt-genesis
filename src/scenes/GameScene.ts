@@ -332,9 +332,9 @@ export class GameScene extends Phaser.Scene {
     this.proactiveTimers.set('阿衰', Phaser.Math.Between(12000, 25000))
     this.proactiveCooldowns.set('阿衰', 8000) // Extra cooldown so 阿衰 doesn't wander off right after being told to work
 
-    this.commandQueue = this.commandQueue.then(() =>
-      this.runCommandBatch(response.commands),
-    )
+    this.commandQueue = this.commandQueue
+      .then(() => this.runCommandBatch(response.commands))
+      .catch((err) => { console.error('[CommandQueue] batch failed, resetting queue', err); this.proactiveRunning = false })
 
     // Fire world event if present
     if (response.worldEvent) {
@@ -830,10 +830,11 @@ export class GameScene extends Phaser.Scene {
         npc.readProp?.setVisible(true)
         this.tweens.add({
           targets: npc.body,
-          y: npc.body.y - 5,
-          duration: 500,
+          y: npc.body.y - 12,
+          duration: 600,
           yoyo: true,
-          repeat: 1,
+          repeat: 2,
+          ease: 'Sine.easeInOut',
           onRepeat: () => playPageFlip(),
           onUpdate: () => this.syncNPCVisuals(npc),
           onComplete: () => {
