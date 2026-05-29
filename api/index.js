@@ -51,13 +51,13 @@ export default async function handler(req, res) {
       if (npcState?.worldState) contextualPrompt += `\n\n（世界状态：${npcState.worldState}。）`
       if (npcState?.relationships) contextualPrompt += `\n（NPC关系：${npcState.relationships}。）`
 
-      // Inject custom names
+      // Inject custom names for narrative only (NOT for command npcName field)
       const nameNote = []
       for (const n of ['阿强', '阿珍', '阿衰']) {
         const custom = npcState?.[n]?.customName
         if (custom && custom !== n) nameNote.push(`${n}（玩家将其命名为"${custom}"）`)
       }
-      if (nameNote.length > 0) contextualPrompt += `\n\n（注：${nameNote.join('；')}）`
+      if (nameNote.length > 0) contextualPrompt += `\n\n（注：${nameNote.join('；')}——请在 SPEAK 气泡文本中使用自定义名称，命令中 npcName 必须用原始名称：阿强、阿珍、阿衰）`
       if (npcState?.阿衰?.resistance > 30) contextualPrompt += `\n\n（注：阿衰当前抵触值 ${npcState.阿衰.resistance}/100，不太情愿干活。）`
 
       const apiKey = process.env.DEEPSEEK_API_KEY

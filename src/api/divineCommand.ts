@@ -18,6 +18,9 @@ import type {
 } from '../types'
 
 const VALID_NPC_NAMES = new Set<NPCName>(['阿强', '阿珍', '阿衰'])
+/** Maps custom NPC names back to original names (set dynamically from main.ts). */
+let customNameMap: Record<string, NPCName> = {}
+export function setCustomNameMap(map: Record<string, NPCName>): void { customNameMap = map }
 const VALID_ACTIONS = new Set<NPCAction>(['WALK_TO', 'PLAY_ANIMATION', 'SPEAK', 'IDLE'])
 const VALID_ANIMATIONS = new Set<AnimationType>(['CHOP', 'READ', 'SLEEP', 'IDLE'])
 const VALID_WORLD_EVENTS = new Set<WorldEventType>([
@@ -38,7 +41,11 @@ function sanitizeCommand(raw: unknown): NPCCommand | null {
   if (!raw || typeof raw !== 'object') return null
 
   const cmd = raw as Record<string, unknown>
-  const npcName = VALID_NPC_NAMES.has(cmd.npcName as NPCName) ? (cmd.npcName as NPCName) : null
+  // Check original names first, then try custom name map
+  let npcName = VALID_NPC_NAMES.has(cmd.npcName as NPCName) ? (cmd.npcName as NPCName) : null
+  if (!npcName && typeof cmd.npcName === 'string') {
+    npcName = customNameMap[cmd.npcName] ?? null
+  }
   const action = VALID_ACTIONS.has(cmd.action as NPCAction) ? (cmd.action as NPCAction) : 'IDLE'
 
   if (!npcName) return null

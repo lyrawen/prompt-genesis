@@ -318,13 +318,13 @@ export function createDivineApiRouter() {
       contextualPrompt += `\n（NPC关系：${npcState.relationships}。正数代表友好，负数代表紧张。请让友好的NPC一起工作以获得更好的配合。）`
     }
 
-    // Inject custom NPC names if set
+    // Inject custom NPC names for narrative only (NOT for command npcName field)
     const nameNote = []
     for (const n of ['阿强', '阿珍',  '阿衰']) {
       const custom = npcState?.[n]?.customName
-      if (custom && custom !== n) nameNote.push(`${n}（玩家将其命名为"${custom}"，请用此名称称呼他/她）`)
+      if (custom && custom !== n) nameNote.push(`${n}（玩家将其命名为"${custom}"）`)
     }
-    if (nameNote.length > 0) contextualPrompt += `\n\n（注：${nameNote.join('；')}）`
+    if (nameNote.length > 0) contextualPrompt += `\n\n（注：${nameNote.join('；')}——请在 SPEAK 气泡文本中使用这些自定义名称，但命令中的 npcName 必须使用原始名称：阿强、阿珍、阿衰）`
 
     if (npcState && npcState.阿衰) {
       const slacker = npcState.阿衰

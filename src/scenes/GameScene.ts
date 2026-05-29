@@ -712,6 +712,15 @@ export class GameScene extends Phaser.Scene {
       byNPC.set(cmd.npcName, list)
     }
 
+    // Stop all NPCs before executing player commands: clear pending velocities & proactive interference
+    for (const npcName of byNPC.keys()) {
+      const npc = this.npcs.get(npcName)
+      if (npc) {
+        const body = npc.body.body as Phaser.Physics.Arcade.Body
+        if (body) body.setVelocity(0, 0)
+      }
+    }
+
     await Promise.all(
       Array.from(byNPC.values()).map(seq => this.runNPCSquence(seq)),
     )

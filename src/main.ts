@@ -1,6 +1,6 @@
 import Phaser from 'phaser'
 import './style.css'
-import { fetchDivineCommand, fetchEpilogue, fetchIdleEvent } from './api/divineCommand'
+import { fetchDivineCommand, fetchEpilogue, fetchIdleEvent, setCustomNameMap } from './api/divineCommand'
 import {
   applyStateImpact,
   createInitialGameState,
@@ -17,6 +17,7 @@ import type {
   Achievement,
   GlobalGameState,
   LLMResponse,
+  NPCName,
   QualityFeedback,
   WorldEvent,
 } from './types'
@@ -868,6 +869,14 @@ function bindPromptBridge(game: Phaser.Game): void {
   startPlaceholderRotation()
   bindButtonSounds(startBtn, castBtn, restartBtn)
 
+  // Build reverse-name map for LLM responses (custom name → original)
+  const reverseNames: Record<string, NPCName> = {}
+  for (const orig of ['阿强', '阿珍', '阿衰'] as NPCName[]) {
+    const custom = saveData.npcNames[orig]
+    if (custom && custom !== orig) reverseNames[custom] = orig
+  }
+  setCustomNameMap(reverseNames)
+
   // Load custom NPC names into inputs
   const defaultNames = ['阿强', '阿珍', '阿衰']
   for (const name of defaultNames) {
@@ -949,8 +958,12 @@ function bindPromptBridge(game: Phaser.Game): void {
       gameState = applyStateImpact(gameState, totalImpact)
       renderHud(gameState)
 
-      const scene = game.scene.getScene('GameScene') as GameScene
-      scene.executeAICommands(response)
+      const scene = game.scene.getScene('GameScene') as GameScene | null
+      if (scene) {
+        scene.executeAICommands(response)
+      } else {
+        console.error('[Prompt Genesis] GameScene not found — commands not executed')
+      }
 
       // Divine gong — sound of the gods answering
       playGong()
