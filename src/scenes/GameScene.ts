@@ -326,15 +326,34 @@ export class GameScene extends Phaser.Scene {
       this.applyMapMutation(response.mapMutation)
     }
 
+    // Check if any NPC in the command is currently doing a proactive action
+    const commandNPCs = new Set(response.commands.map(c => c.npcName))
+    for (const npcName of commandNPCs) {
+      // Force-stop any ongoing proactive action for this NPC by resetting its timer
+      this.proactiveTimers.set(npcName, Phaser.Math.Between(15000, 30000))
+    }
+
     // Player command resets proactive timers
     this.proactiveTimers.set('阿强', Phaser.Math.Between(12000, 25000))
     this.proactiveTimers.set('阿珍', Phaser.Math.Between(12000, 25000))
     this.proactiveTimers.set('阿衰', Phaser.Math.Between(12000, 25000))
-    this.proactiveCooldowns.set('阿衰', 8000) // Extra cooldown so 阿衰 doesn't wander off right after being told to work
+    this.proactiveCooldowns.set('阿衰', 8000)
+
+    // Cancel any proactive action if a player command targets the same NPC
+    if (commandNPCs.size > 0) {
+      this.proactiveRunning = false
+    }
 
     this.commandQueue = this.commandQueue
-      .then(() => this.runCommandBatch(response.commands))
-      .catch((err) => { console.error('[CommandQueue] batch failed, resetting queue', err); this.proactiveRunning = false })
+      .then(() => {
+        console.log('[CommandQueue] executing batch:', JSON.stringify(response.commands.map(c => ({ name: c.npcName, action: c.action }))))
+        return this.runCommandBatch(response.commands)
+      })
+      .catch((err) => {
+        console.error('[CommandQueue] batch failed, resetting queue', err)
+        this.commandQueue = Promise.resolve()
+        this.proactiveRunning = false
+      })
 
     // Fire world event if present
     if (response.worldEvent) {
@@ -727,6 +746,10 @@ export class GameScene extends Phaser.Scene {
 
   private cmdWalkTo(npc: NPCRecord, targetX: number, targetY: number): Promise<void> {
     const WALK_TIMEOUT_MS = 10_000
+
+    // Ensure physics is unpaused before moving
+    if (this.physics.world.isPaused) this.physics.world.resume()
+
     // 阿衰 walks slower when resistance is high
     let speed = npc.name === '阿衰' ? WALK_SPEED * (1 - this.slackerResistance * 0.004) : WALK_SPEED
     // Relationship boost: friends walk faster, rivals walk slower

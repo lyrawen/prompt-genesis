@@ -994,6 +994,7 @@ function bindPromptBridge(game: Phaser.Game): void {
       }
 
       isBulletTime = false
+      if (currentGame) currentGame.registry.set('bulletTime', false) // instant sync, not waiting for clock tick
       lastPromptTime = elapsedSeconds
       clearWhisper()
 
@@ -1045,6 +1046,8 @@ function bindPromptBridge(game: Phaser.Game): void {
       console.error('[Prompt Genesis]', error)
       const msg = error instanceof Error ? error.message : '未知错误'
       statusLine.textContent = `神谕连接失败：${msg}`
+      isBulletTime = false
+      if (currentGame) currentGame.registry.set('bulletTime', false)
     } finally {
       if (!gameState.isGameOver) setPromptControlsEnabled(true)
     }
